@@ -32,26 +32,18 @@ function Home() {
   }, [offer, setOffer, depart, arrive, setTotal, from, to, setFrom, setTo]);
 
   const handledepart = date => {
-    switch (date) {
-      case '':
-        setArrive('');
-        break;
-      default:
-        handleArrive(date);
-        break;
-    }
+    date == "" ? setArrive('') : handleArrive(date);
   };
 
   const handleArrive = date => {
     let currentDate = new Date();
     let givenDate = new Date(date);
     switch (true) {
-      case currentDate.getTime() <= givenDate.getTime():
+      case givenDate.getTime() >= currentDate.getTime() :
         setDepart(date);
-        let aD = new Date(givenDate.setHours(givenDate.getHours() + 7.5));
-        aD = aD.toJSON();
-        aD = aD.slice(0, aD.length - 8);
-        setArrive(aD);
+        let arriveDate = new Date(givenDate.setHours(givenDate.getHours() + 7.5));
+        arriveDate = arriveDate.toJSON().split("").slice(0, 16).join("");
+        setArrive(arriveDate);
         break;
       default:
         setDepart('');
