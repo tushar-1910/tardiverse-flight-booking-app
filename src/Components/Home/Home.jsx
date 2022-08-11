@@ -3,6 +3,7 @@ import React from 'react';
 import Offers from '../Offers/Offers';
 import banner from './banner.png';
 import { MdArrowDropDown } from 'react-icons/md';
+import { UserContext } from '../../Context/user';
 const cities = [
   'Punjab',
   'Chennai',
@@ -23,13 +24,100 @@ function Home() {
   const [Discount, setDiscount] = React.useState('');
   const [Total, setTotal] = React.useState('');
   const toast = useToast();
+  const { booker } = React.useContext(UserContext);
 
   React.useEffect(() => {
-    getOffer();
+    afterOffer();
     getTotal();
   }, [offer, setOffer, depart, arrive, setTotal, from, to, setFrom, setTo]);
 
+  const handledepart = date => {
+    switch (date) {
+      case '':
+        setArrive('');
+        break;
+      default:
+        handleArrive(date);
+        break;
+    }
+  };
+
+  const handleArrive = date => {
+    let currentDate = new Date();
+    let givenDate = new Date(date);
+    switch (true) {
+      case currentDate.getTime() <= givenDate.getTime():
+        setDepart(date);
+        let aD = new Date(givenDate.setHours(givenDate.getHours() + 7.5));
+        aD = aD.toJSON();
+        aD = aD.slice(0, aD.length - 8);
+        setArrive(aD);
+        break;
+      default:
+        setDepart('');
+        break;
+    }
+  };
+  const getTotal = () => {
+    let departure = new Date(depart);
+    let today = new Date();
+    let month = Math.abs(departure.getMonth() - today.getMonth());
+    let a = cities.indexOf(from);
+    let b = cities.indexOf(to);
+    month === 0
+      ? setTotal((a + b) * 1100)
+      : setTotal(
+          (a + b) * 1100 - Math.round(((a + b) * 1100 * (month * 0.6)) / 100)
+        );
+  };
+
+  const afterOffer = () => {
+    offer === 'NEW10'
+      ? setDiscount(Math.round((Total * 90) / 100))
+      : offer === 'UPGR100'
+      ? setDiscount('Class Upgraded')
+      : offer === 'FREEDRNK'
+      ? setDiscount('Free Drinks')
+      : offer === 'FREESNCK'
+      ? setDiscount('Free Snacks')
+      : setDiscount('');
+  };
+
   const handleBook = () => {
+    booker.email ? confirmBooking() : errorBooking();
+  };
+
+  const errorBooking = () => {
+    toast({
+      title: 'Login first',
+      status: 'error',
+      duration: 2000,
+      isClosable: true,
+      position: 'top',
+    });
+  };
+
+  const confirmBooking = () => {
+    from && to && depart && arrive
+      ? toast({
+          position: 'top',
+          title: 'Ticket booked successfully',
+          description: 'Details are sent to your email',
+          status: 'success',
+          variant: 'subtle',
+          duration: 2000,
+          isClosable: true,
+          width: 'full',
+          height: 'full',
+        })
+      : toast({
+          position: 'top',
+          title: 'Please fill all the fields',
+          status: 'warning',
+          variant: 'subtle',
+          duration: 2000,
+          isClosable: true,
+        });
     setFrom('');
     setTo('');
     setDepart('');
@@ -39,107 +127,12 @@ function Home() {
     setTotal('');
   };
 
-  const handledepart = date => {
-    console.log('depart', date);
-    if (!date) {
-      setArrive('');
-      return;
-    } else {
-      let departure = new Date(date);
-      let today = new Date();
-      if (
-        ((departure.getDate() >= today.getDate() &&
-          departure.getMonth() >= today.getMonth()) ||
-          (departure.getDate() <= today.getDate() &&
-            departure.getMonth() > today.getMonth())) &&
-        departure.getFullYear() >= today.getFullYear() &&
-        departure.getHours() >= today.getHours()
-      ) {
-        setDepart(date);
-        let arrival = new Date(
-          departure.setHours(
-            departure.getHours() + 2,
-            departure.getMinutes() + 30
-          )
-        );
-        let hour;
-        let month;
-        let day;
-        let minute;
-        if (arrival.getHours() < 10) {
-          hour = '0' + arrival.getHours();
-        } else {
-          hour = arrival.getHours();
-        }
-        if (arrival.getMinutes() < 10) {
-          minute = '0' + arrival.getMinutes();
-        } else {
-          minute = arrival.getMinutes();
-        }
-        if (arrival.getMonth() < 10) {
-          month = '0' + (arrival.getMonth() + 1);
-        } else {
-          month = arrival.getMonth() + 1;
-        }
-        if (arrival.getDate() < 10) {
-          day = '0' + arrival.getDate();
-        } else {
-          day = arrival.getDate();
-        }
-
-        arrival =
-          arrival.getFullYear() +
-          '-' +
-          month +
-          '-' +
-          day +
-          'T' +
-          hour +
-          ':' +
-          minute;
-
-        setArrive(arrival);
-      } else {
-        setDepart('');
-      }
-    }
-  };
-  const getTotal = () => {
-    let a = cities.indexOf(from);
-    let b = cities.indexOf(to);
-    let departure = new Date(depart);
-    let today = new Date();
-    let month = Math.abs(departure.getMonth() - today.getMonth());
-    if (month === 0) {
-      let Total = (a + b) * 1000;
-      setTotal(Total);
-    } else {
-      let Total =
-        (a + b) * 1000 - Math.round(((a + b) * 1000 * (month * 0.6)) / 100);
-      setTotal(Total);
-    }
-  };
-
-  const getOffer = () => {
-    // console.log('called get offer' , offer)
-    if (offer === 'NEW10') {
-      setDiscount(Math.round((Total * 90) / 100));
-    } else if (offer === 'UPGR100') {
-      setDiscount('Class Upgraded');
-    } else if (offer === 'FREEDRNK') {
-      setDiscount('Free Drinks');
-    } else if (offer === 'FREESNCK') {
-      setDiscount('Free Snacks');
-    }
-  };
-
   return (
     <Box
       style={{
         backgroundImage: `url(${banner})`,
-        width: '1536px',
+        width: '100%',
         height: '500px',
-        margin: '2rem auto',
       }}
     >
       <h1
@@ -160,7 +153,7 @@ function Home() {
           margin: '0 auto',
           borderRadius: '0.25rem',
           padding: '1.5rem',
-          width: '85vw',
+          width: '85%',
           height: '250px',
           display: 'flex',
           flexDirection: 'column',
@@ -177,6 +170,7 @@ function Home() {
             value={from}
             onChange={e => {
               e.target.value === to ? setFrom('') : setFrom(e.target.value);
+              setOffer('')
             }}
             icon={<MdArrowDropDown />}
             bg={'white'}
@@ -197,6 +191,7 @@ function Home() {
             value={to}
             onChange={e => {
               e.target.value === from ? setTo('') : setTo(e.target.value);
+              setOffer('')
             }}
             icon={<MdArrowDropDown />}
             bg={'white'}
@@ -217,6 +212,7 @@ function Home() {
             value={depart}
             onChange={e => {
               handledepart(e.target.value);
+              setOffer('')
             }}
             placeholder="Select Date and Time"
             size="lg"
@@ -228,6 +224,7 @@ function Home() {
             value={arrive}
             onChange={() => {
               handledepart(depart);
+              setOffer('')
             }}
             placeholder="Select Date and Time"
             size="lg"
@@ -236,9 +233,9 @@ function Home() {
           />
         </Box>
         <Box style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-          <Offers setOffer={setOffer} getOffer={getOffer} />
+          <Offers setOffer={setOffer} afterOffer={afterOffer} />
           <Input
-            placeholder="Enter Coupon Code"
+            placeholder="Enter Code"
             value={offer}
             width={430}
             size="lg"
@@ -263,24 +260,6 @@ function Home() {
           <Button
             onClick={() => {
               handleBook();
-              from && to && depart && arrive
-                ? toast({
-                    position: 'top',
-                    title: 'Ticket booked successfully',
-                    description: 'Details are sent to your email',
-                    status: 'success',
-                    variant: "subtle",
-                    duration: 3000,
-                    isClosable: true,
-                  })
-                : toast({
-                    position: 'top',
-                    title: 'Please fill all the fields',
-                    status: 'warning',
-                    variant: "subtle",
-                    duration: 3000,
-                    isClosable: true,
-                  });
             }}
             width={250}
             size="lg"
