@@ -1,11 +1,20 @@
-import { Box, Button } from '@chakra-ui/react';
+import { Box, Button, useToast } from '@chakra-ui/react';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { UserContext } from '../../Context/user';
 import './navbar.css';
 function Navbar() {
     const { booker, setBooker } = React.useContext(UserContext);
+    const toast = useToast();
     const handleLogout = () => {
+        toast({
+            position: 'top',
+            title: 'User logged out',
+            status: 'success',
+            variant: 'subtle',
+            duration: 2000,
+            isClosable: true,
+          });
       setBooker({});
       localStorage.removeItem('user');
     }
